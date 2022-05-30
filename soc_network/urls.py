@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from backend.views import SignUpView, LogInView, UserView, PostView
+from backend.views import SignUpView, LogInView, UserView, PostView, PostLikeView, PostUnlikeView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,4 +23,6 @@ urlpatterns = [
     path('api/login', LogInView.as_view()),
     path('api/user', UserView.as_view()),
     path('api/post', PostView.as_view()),
+    path('api/post/<id>/like', PostLikeView.as_view()),
+    path('api/post/<id>/unlike', PostUnlikeView.as_view()),
          ]

@@ -1,0 +1,45 @@
+POST /api/signup HTTP/1.1
+Host: 127.0.0.1:8000
+Content-Type: application/json
+
+{
+    "name": "c",
+    "email": "cfcdc@c.com",
+    "password": "c"
+}
+###
+
+POST /api/login HTTP/1.1
+Host: 127.0.0.1:8000
+Content-Type: application/json
+
+{
+    "email": "ccc@c.com",
+    "password": "c"
+}
+
+###
+
+GET /api/user HTTP/1.1
+Host: 127.0.0.1:8000
+
+###
+
+POST /api/post HTTP/1.1
+Host: 127.0.0.1:8000
+Content-Type: application/json
+
+{
+    "title": "asa"
+    }
+
+###
+
+PUT /api/post/19/like HTTP/1.1
+Host: 127.0.0.1:8000
+
+
+###
+
+PUT /api/post/19/unlike HTTP/1.1
+Host: 127.0.0.1:8000

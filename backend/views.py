@@ -1,14 +1,14 @@
 import datetime
 
 import jwt
-from jwt import InvalidSignatureError
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed, NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # Create your views here.
-from .models import User
+from .models import User, Post
 from .serializers import UserSerializer, PostSerializer
+
 
 SECRET = 'sadsadsadDSADAEDsad214323SADQ2@!$@!$%#'
 
@@ -19,7 +19,7 @@ def jwt_authenticate(request):
         raise AuthenticationFailed('Unauthenticated')
 
     try:
-        payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        payload = jwt.decode(token, SECRET, algorithms=['HS256'])
     except jwt.exceptions.InvalidSignatureError:
         raise AuthenticationFailed('Unauthenticated')
     except jwt.exceptions.ExpiredSignatureError:
@@ -29,6 +29,8 @@ def jwt_authenticate(request):
 
 
 class SignUpView(APIView):
+
+
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -38,8 +40,8 @@ class SignUpView(APIView):
 
 class LogInView(APIView):
     def post(self, request):
-        email = request.data['email']
-        password = request.data['password']
+        email = request.data.get('email')
+        password = request.data.get('password')
 
         user = User.objects.filter(email=email).first()
 
@@ -55,7 +57,7 @@ class LogInView(APIView):
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)
         }
 
-        token = jwt.encode(payload, 'secret', algorithm='HS256')
+        token = jwt.encode(payload, SECRET, algorithm='HS256')
 
         response = Response()
         response.set_cookie(key='jwt', value=token, httponly=True)
@@ -67,17 +69,6 @@ class UserView(APIView):
 
     def get(self, request):
 
-        # token = request.COOKIES.get('jwt') or request.data.get('jwt')
-        #
-        # if not token:
-        #     raise AuthenticationFailed('Unauthenticated')
-        #
-        # try:
-        #     payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-        # except jwt.exceptions.InvalidSignatureError:
-        #     raise AuthenticationFailed('Unauthenticated')
-        # except jwt.exceptions.ExpiredSignatureError:
-        #     raise AuthenticationFailed('Token has expired')
         payload = jwt_authenticate(request)
         user = User.objects.filter(id=payload['id']).first()
         serializer = UserSerializer(user)
@@ -98,13 +89,34 @@ class PostView(APIView):
 
 class PostLikeView(APIView):
 
-    def post(self, request):
+    def put(self, request, id):
         payload = jwt_authenticate(request)
-        # user = User.objects.filter(id=payload['id']).first()
-        data = request.data
-        request.data['creator'] = payload['id']
-        serializer = PostSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        user_id = payload['id']
+
+        try:
+            post = Post.objects.get(id=id)
+        except Post.DoesNotExist:
+            raise NotFound(detail=f'Post with id {id} does not exist')
+
+        post.users_liked.add(user_id)
+        serializer = PostSerializer(post)
 
         return Response(serializer.data)
+
+
+class PostUnlikeView(APIView):
+
+    def put(self, request, id):
+        payload = jwt_authenticate(request)
+        user_id = payload['id']
+
+        try:
+            post = Post.objects.get(id=id)
+        except Post.DoesNotExist:
+            raise NotFound(detail=f'Post with id {id} does not exist')
+
+        post.users_liked.remove(user_id)
+        serializer = PostSerializer(post)
+
+        return Response(serializer.data)
+
